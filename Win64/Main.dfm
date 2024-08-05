@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 221
   Top = 118
   Caption = 'ViaThinkSoft OIDplus for Windows'
-  ClientHeight = 420
+  ClientHeight = 582
   ClientWidth = 717
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,7 +19,7 @@ object Form1: TForm1
     Left = 440
     Top = 0
     Width = 277
-    Height = 420
+    Height = 582
     Align = alClient
     HideSelection = False
     Indent = 19
@@ -32,7 +32,8 @@ object Form1: TForm1
     Left = 0
     Top = 0
     Width = 440
-    Height = 420
+    Height = 582
+    ActivePage = TabSheet1
     Align = alLeft
     TabOrder = 1
     object TabSheet1: TTabSheet
@@ -40,58 +41,51 @@ object Form1: TForm1
       TabVisible = False
       DesignSize = (
         432
-        410)
-      object Label1: TLabel
-        Left = 272
-        Top = 0
-        Width = 48
-        Height = 13
-        Caption = 'ASN.1 ID:'
-      end
+        572)
       object Label3: TLabel
-        Left = 0
-        Top = 112
+        Left = 3
+        Top = 135
         Width = 23
         Height = 13
         Caption = 'Title:'
       end
       object Label4: TLabel
-        Left = 0
+        Left = 3
         Top = 8
         Width = 22
         Height = 13
         Caption = 'OID:'
       end
       object Label5: TLabel
-        Left = 0
-        Top = 48
+        Left = 3
+        Top = 50
         Width = 18
         Height = 13
         Caption = 'RA:'
       end
       object Label6: TLabel
-        Left = 192
-        Top = 8
+        Left = 3
+        Top = 91
         Width = 40
         Height = 13
         Caption = 'Created:'
       end
       object Label7: TLabel
-        Left = 192
-        Top = 48
+        Left = 89
+        Top = 90
         Width = 44
         Height = 13
         Caption = 'Updated:'
       end
       object Label15: TLabel
-        Left = 0
-        Top = 152
+        Left = 3
+        Top = 181
         Width = 103
         Height = 13
         Caption = 'Additional information:'
       end
       object Label16: TLabel
-        Left = 135
+        Left = 183
         Top = 8
         Width = 42
         Height = 13
@@ -99,141 +93,190 @@ object Form1: TForm1
         Caption = 'Filename'
       end
       object Edit3: TEdit
-        Left = 0
-        Top = 128
+        Left = 4
+        Top = 154
         Width = 425
         Height = 21
         TabOrder = 0
       end
       object Memo1: TMemo
-        Left = 0
-        Top = 168
-        Width = 425
-        Height = 201
+        Left = 3
+        Top = 200
+        Width = 426
+        Height = 331
         Anchors = [akLeft, akTop, akBottom]
         ScrollBars = ssVertical
-        TabOrder = 7
+        TabOrder = 4
       end
       object Edit4: TEdit
-        Left = 0
+        Left = 3
         Top = 24
-        Width = 177
+        Width = 222
         Height = 21
         TabStop = False
         Color = clBtnFace
         ReadOnly = True
-        TabOrder = 4
+        TabOrder = 1
       end
       object CheckBox1: TCheckBox
-        Left = 0
-        Top = 88
-        Width = 97
+        Left = 168
+        Top = 110
+        Width = 75
         Height = 17
         Caption = 'Draft OID'
-        TabOrder = 5
+        TabOrder = 2
         OnClick = CheckBox1Click
       end
       object ComboBox1: TComboBox
-        Left = 0
+        Left = 3
         Top = 64
-        Width = 177
+        Width = 222
         Height = 21
         Style = csDropDownList
-        TabOrder = 6
+        TabOrder = 3
       end
       object Edit5: TEdit
-        Left = 192
-        Top = 24
+        Left = 3
+        Top = 108
         Width = 73
         Height = 21
         TabStop = False
         Color = clBtnFace
         ReadOnly = True
-        TabOrder = 13
+        TabOrder = 9
       end
       object Edit6: TEdit
-        Left = 193
-        Top = 64
+        Left = 89
+        Top = 108
         Width = 73
         Height = 21
         TabStop = False
         Color = clBtnFace
         ReadOnly = True
-        TabOrder = 14
-      end
-      object ListBox1: TListBox
-        Left = 272
-        Top = 16
-        Width = 153
-        Height = 73
-        ItemHeight = 13
-        TabOrder = 12
-        OnKeyDown = ListBox1KeyDown
-      end
-      object Edit7: TEdit
-        Left = 272
-        Top = 96
-        Width = 73
-        Height = 21
-        TabOrder = 1
-        OnKeyPress = Edit7KeyPress
-      end
-      object Button1: TButton
-        Left = 344
-        Top = 96
-        Width = 41
-        Height = 25
-        Caption = 'Add'
-        TabOrder = 2
-        OnClick = Button1Click
-      end
-      object Button3: TButton
-        Left = 384
-        Top = 96
-        Width = 41
-        Height = 25
-        Caption = 'Del'
-        TabOrder = 3
-        OnClick = Button3Click
+        TabOrder = 10
       end
       object Button2: TButton
         Left = 3
-        Top = 378
+        Top = 540
         Width = 75
         Height = 25
         Anchors = [akLeft, akBottom]
         Caption = 'Save'
-        TabOrder = 8
+        TabOrder = 5
         OnClick = Button2Click
       end
       object Button4: TButton
         Left = 269
-        Top = 378
+        Top = 540
         Width = 75
         Height = 25
         Anchors = [akLeft, akBottom]
         Caption = 'Create child:'
-        TabOrder = 11
+        TabOrder = 8
         OnClick = Button4Click
       end
       object Edit1: TEdit
         Left = 349
-        Top = 378
-        Width = 73
+        Top = 540
+        Width = 80
         Height = 21
         Anchors = [akLeft, akBottom]
-        TabOrder = 10
+        TabOrder = 7
         OnKeyPress = Edit1KeyPress
       end
       object Button6: TButton
         Left = 123
-        Top = 378
+        Top = 540
         Width = 75
         Height = 25
         Anchors = [akLeft, akBottom]
         Caption = 'Delete'
-        TabOrder = 9
+        TabOrder = 6
         OnClick = Button6Click
+      end
+      object PageControl2: TPageControl
+        Left = 249
+        Top = 0
+        Width = 181
+        Height = 140
+        ActivePage = TabAsnIds
+        TabOrder = 11
+        object TabAsnIds: TTabSheet
+          Caption = 'ASN.1 ID'
+          object TxtNewAsnId: TEdit
+            Left = 3
+            Top = 82
+            Width = 73
+            Height = 21
+            TabOrder = 0
+            OnKeyPress = TxtNewAsnIdKeyPress
+          end
+          object LbAsnIds: TListBox
+            Left = 3
+            Top = 3
+            Width = 167
+            Height = 73
+            ItemHeight = 13
+            TabOrder = 1
+            OnKeyDown = LbAsnIdsKeyDown
+          end
+          object BtnAddAsnId: TButton
+            Left = 82
+            Top = 82
+            Width = 41
+            Height = 21
+            Caption = 'Add'
+            TabOrder = 2
+            OnClick = BtnAddAsnIdClick
+          end
+          object BtnDelAsnId: TButton
+            Left = 129
+            Top = 82
+            Width = 41
+            Height = 21
+            Caption = 'Del'
+            TabOrder = 3
+            OnClick = BtnDelAsnIdClick
+          end
+        end
+        object TabSheet6: TTabSheet
+          Caption = 'IRI'
+          ImageIndex = 1
+          object TxtNewIri: TEdit
+            Left = 3
+            Top = 82
+            Width = 73
+            Height = 21
+            TabOrder = 0
+            OnKeyPress = TxtNewAsnIdKeyPress
+          end
+          object LbIris: TListBox
+            Left = 3
+            Top = 3
+            Width = 167
+            Height = 73
+            ItemHeight = 13
+            TabOrder = 1
+          end
+          object BtnAddIri: TButton
+            Left = 82
+            Top = 82
+            Width = 41
+            Height = 21
+            Caption = 'Add'
+            TabOrder = 2
+            OnClick = BtnAddIriClick
+          end
+          object BtnDelIri: TButton
+            Left = 129
+            Top = 82
+            Width = 41
+            Height = 21
+            Caption = 'Del'
+            TabOrder = 3
+            OnClick = BtnDelIriClick
+          end
+        end
       end
     end
     object TabSheet2: TTabSheet

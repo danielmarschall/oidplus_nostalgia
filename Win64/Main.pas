@@ -12,7 +12,6 @@ type
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
     TabSheet2: TTabSheet;
-    Label1: TLabel;
     Edit3: TEdit;
     Label3: TLabel;
     Memo1: TMemo;
@@ -25,10 +24,10 @@ type
     Label6: TLabel;
     Edit6: TEdit;
     Label7: TLabel;
-    ListBox1: TListBox;
-    Edit7: TEdit;
-    Button1: TButton;
-    Button3: TButton;
+    LbAsnIds: TListBox;
+    TxtNewAsnId: TEdit;
+    BtnAddAsnId: TButton;
+    BtnDelAsnId: TButton;
     Button2: TButton;
     Button4: TButton;
     Edit1: TEdit;
@@ -58,10 +57,17 @@ type
     Label15: TLabel;
     Label16: TLabel;
     Label17: TLabel;
+    PageControl2: TPageControl;
+    TabAsnIds: TTabSheet;
+    TabSheet6: TTabSheet;
+    TxtNewIri: TEdit;
+    LbIris: TListbox;
+    BtnAddIri: TButton;
+    BtnDelIri: TButton;
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure FormShow(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
+    procedure BtnAddAsnIdClick(Sender: TObject);
+    procedure BtnDelAsnIdClick(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button7Click(Sender: TObject);
     procedure Button6Click(Sender: TObject);
@@ -72,13 +78,15 @@ type
     procedure CheckBox1Click(Sender: TObject);
     procedure Button9Click(Sender: TObject);
     procedure Edit8KeyPress(Sender: TObject; var Key: Char);
-    procedure ListBox1KeyDown(Sender: TObject; var Key: Word;
+    procedure LbAsnIdsKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure Edit7KeyPress(Sender: TObject; var Key: Char);
+    procedure TxtNewAsnIdKeyPress(Sender: TObject; var Key: Char);
     procedure Edit2KeyPress(Sender: TObject; var Key: Char);
     procedure Edit1KeyPress(Sender: TObject; var Key: Char);
     procedure TreeView1KeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure BtnAddIriClick(Sender: TObject);
+    procedure BtnDelIriClick(Sender: TObject);
   private
     function ShowOID(oid: string; oiddb: POID; nod: TTreeNode): integer;
     procedure ShowRA(radb_idx: PRA; nod: TTreeNode);
@@ -206,7 +214,8 @@ begin
       ReadOidFile(DBPath+LeftPadStr(IntToStr(Integer(TreeView1.Selected.Data)),8,'0')+'.OID', oiddb);
       Label16.Caption := LeftPadStr(IntToStr(Integer(TreeView1.Selected.Data)),8,'0')+'.OID';
       Edit4.Text := Copy(TreeView1.Selected.Text, 1, Pos(' ',TreeView1.Selected.Text+' ')-1);
-      Listbox1.Items.Text := oiddb^.ASNIds.Text;
+      LbAsnIds.Items.Text := oiddb^.ASNIds.Text;
+      LbIris.Items.Text := oiddb^.UnicodeLabels.Text;
       CheckBox1.Checked := oiddb^.draft;
       Memo1.Text := oiddb^.Description;
       Edit3.Text := Memo1.Lines.Strings[0];
@@ -218,7 +227,7 @@ begin
     finally
       FreeOidDef(oiddb);
     end;
-    Edit7.Text := '';
+    TxtNewAsnId.Text := '';
     Edit1.Text := '';
   end;
   if Copy(TreeView1.Selected.Text, 1, 3) = 'RA:' then
@@ -309,36 +318,66 @@ begin
   result := true;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+function UnicodeLabelValid(unicodeLabel: string): boolean;
+begin
+  // TODO: Implement
+  result := true;
+end;
+
+procedure TForm1.BtnAddAsnIdClick(Sender: TObject);
 var
   asn1id: string;
   i: integer;
 begin
-  asn1id := Edit7.Text;
+  asn1id := TxtNewAsnId.Text;
   if asn1id = '' then exit;
-  for i := 0 to ListBox1.Items.Count-1 do
+  for i := 0 to LbAsnIds.Items.Count-1 do
   begin
-    if ListBox1.Items.Strings[i] = asn1id then ShowError(SItemAlreadyExists);
+    if LbAsnIds.Items.Strings[i] = asn1id then ShowError(SItemAlreadyExists);
   end;
   if not Asn1IdValid(asn1id) then ShowError(SInvalidAlphaNumId);
-  ListBox1.Items.Add(asn1id);
+  LbAsnIds.Items.Add(asn1id);
   if CheckBox1.Checked then
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
   else
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true));
-  Edit7.Text := '';
+  TxtNewAsnId.Text := '';
 end;
 
-procedure TForm1.Button3Click(Sender: TObject);
+procedure TForm1.BtnAddIriClick(Sender: TObject);
+var
+  iri: string;
+  i: integer;
 begin
-  if (ListBox1.Items.Count > 0) and ListBox1.Selected[ListBox1.ItemIndex] then
+  iri := TxtNewIri.Text;
+  if iri = '' then exit;
+  for i := 0 to LbIris.Items.Count-1 do
   begin
-    ListBox1.Items.Delete(ListBox1.ItemIndex);
+    if LbAsnIds.Items.Strings[i] = iri then ShowError(SItemAlreadyExists);
+  end;
+  if not UnicodeLabelValid(iri) then ShowError(SInvalidAlphaNumId);
+  LbIris.Items.Add(iri);
+  TxtNewIri.Text := '';
+end;
+
+procedure TForm1.BtnDelAsnIdClick(Sender: TObject);
+begin
+  if (LbAsnIds.Items.Count > 0) and LbAsnIds.Selected[LbAsnIds.ItemIndex] then
+  begin
+    LbAsnIds.Items.Delete(LbAsnIds.ItemIndex);
   end;
   if CheckBox1.Checked then
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
   else
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true));
+end;
+
+procedure TForm1.BtnDelIriClick(Sender: TObject);
+begin
+  if (LbIris.Items.Count > 0) and LbIris.Selected[LbIris.ItemIndex] then
+  begin
+    LbIris.Items.Delete(LbIris.ItemIndex);
+  end;
 end;
 
 function IsPositiveNumber(str: string): boolean;
@@ -676,10 +715,16 @@ begin
       oiddb^.Description := sl.Text;
     end;
 
-    if Trim(oiddb^.ASNIds.Text) <> Trim(ListBox1.Items.Text) then
+    if Trim(oiddb^.ASNIds.Text) <> Trim(LbAsnIds.Items.Text) then
     begin
       modified := true;
-      oiddb^.ASNIds.Text := ListBox1.Items.Text;
+      oiddb^.ASNIds.Text := LbAsnIds.Items.Text;
+    end;
+
+    if Trim(oiddb^.UnicodeLabels.Text) <> Trim(LbIris.Items.Text) then
+    begin
+      modified := true;
+      oiddb^.UnicodeLabels.Text := LbIris.Items.Text;
     end;
 
     if modified then
@@ -698,12 +743,12 @@ var
   i: integer;
 begin
   result := '';
-  for i := 0 to ListBox1.Items.Count-1 do
+  for i := 0 to LbAsnIds.Items.Count-1 do
   begin
     if result = '' then
-      result := ListBox1.Items.Strings[i]
+      result := LbAsnIds.Items.Strings[i]
     else if not onlyfirst then
-      result := result + ',' + ListBox1.Items.Strings[i];
+      result := result + ',' + LbAsnIds.Items.Strings[i];
   end;
 end;
 
@@ -826,21 +871,21 @@ begin
   end;
 end;
 
-procedure TForm1.ListBox1KeyDown(Sender: TObject; var Key: Word;
+procedure TForm1.LbAsnIdsKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   If Key = 46(*DEL*) then
   begin
-    Button3.Click;
+    BtnDelAsnId.Click;
     Key := 0;
   end;
 end;
 
-procedure TForm1.Edit7KeyPress(Sender: TObject; var Key: Char);
+procedure TForm1.TxtNewAsnIdKeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then
   begin
-    Button1.Click;
+    BtnAddAsnId.Click;
     Key := #0;
   end;
 end;
