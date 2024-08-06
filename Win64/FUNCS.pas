@@ -11,6 +11,11 @@ function LeftPadStr(s: string; n: integer; ch: char): string;
 function NextPossibleFileID(const path: string; const ext: string): string;
 function JpnStrToDate(const DateStr: string): TDateTime;
 function JpnDateToStr(Date: TDateTime): string;
+procedure Split(Delimiter: string; Str: string; ListOfStrings: TStrings);
+function Asn1IdValid(asn1id: string): boolean;
+function UnicodeLabelValid(unicodeLabel: string): boolean;
+function IsPositiveNumber(str: string): boolean;
+function RandomStr(len: integer): string;
 
 implementation
 
@@ -199,6 +204,93 @@ var
 begin
   DecodeDate(Date, Year, Month, Day);
   Result := Format('%.4d-%.2d-%.2d', [Year, Month, Day]);
+end;
+
+procedure Split(Delimiter: string; Str: string; ListOfStrings: TStrings);
+var
+  p: integer;
+begin
+  ListOfStrings.Clear;
+  p := Pos(Delimiter, Str);
+  while p > 0 do
+  begin
+    ListOfStrings.Add(Copy(Str, 1, p-1));
+    Delete(Str, 1, p);
+    p := Pos(Delimiter, Str);
+  end;
+  if Str <> '' then ListOfStrings.Add(Str);
+end;
+
+function Asn1IdValid(asn1id: string): boolean;
+var
+  i: integer;
+begin
+  if asn1id = '' then
+  begin
+    result := false;
+    exit;
+  end;
+
+  if not (asn1id[1] in ['a'..'z']) then
+  begin
+    result := false;
+    exit;
+  end;
+
+  for i := 2 to Length(asn1id) do
+  begin
+    if not (asn1id[1] in ['a'..'z', 'A'..'Z', '0'..'9', '-']) then
+    begin
+      result := false;
+      exit;
+    end;
+  end;
+
+  result := true;
+end;
+
+function UnicodeLabelValid(unicodeLabel: string): boolean;
+begin
+  // TODO: Implement
+  result := true;
+end;
+
+function IsPositiveNumber(str: string): boolean;
+var
+  i: integer;
+begin
+  if (str = '') then
+  begin
+    result := false;
+    exit;
+  end;
+
+  result := true;
+  for i := 1 to Length(str) do
+  begin
+    if not (str[i] in ['0'..'9']) then
+    begin
+      result := false;
+      exit;
+    end;
+  end;
+
+  if (str[1] = '0') and (str <> '0') then
+  begin
+    result := false;
+    exit;
+  end;
+end;
+
+function RandomStr(len: integer): string;
+var
+  i: integer;
+begin
+  result := '';
+  for i := 1 to len do
+  begin
+    result := result + Chr(ord('A') + Random(26));
+  end;
 end;
 
 end.

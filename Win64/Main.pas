@@ -17,7 +17,7 @@ type
     Memo1: TMemo;
     Edit4: TEdit;
     Label4: TLabel;
-    CheckBox1: TCheckBox;
+    cbDraft: TCheckBox;
     ComboBox1: TComboBox;
     Label5: TLabel;
     Edit5: TEdit;               
@@ -28,17 +28,17 @@ type
     TxtNewAsnId: TEdit;
     BtnAddAsnId: TButton;
     BtnDelAsnId: TButton;
-    Button2: TButton;
-    Button4: TButton;
+    BtnSaveOid: TButton;
+    BtnCreateOid: TButton;
     Edit1: TEdit;
     TabSheet3: TTabSheet;
-    Button5: TButton;
+    BtnOidRootCreate: TButton;
     Edit2: TEdit;
     TabSheet4: TTabSheet;
-    Button6: TButton;
+    BtnOidDelete: TButton;
     Edit8: TEdit;
-    Button7: TButton;
-    Button8: TButton;
+    BtnRaRootCreate: TButton;
+    BtnRaDelete: TButton;
     Edit9: TEdit;
     Label2: TLabel;
     Edit10: TEdit;
@@ -49,7 +49,7 @@ type
     Label10: TLabel;
     Edit13: TEdit;
     Label11: TLabel;
-    Button9: TButton;
+    BtnRaSave: TButton;
     Edit14: TEdit;
     Label12: TLabel;
     Label13: TLabel;
@@ -58,25 +58,28 @@ type
     Label16: TLabel;
     Label17: TLabel;
     PageControl2: TPageControl;
-    TabAsnIds: TTabSheet;
-    TabSheet6: TTabSheet;
+    tsAsnIds: TTabSheet;
+    tsIris: TTabSheet;
     TxtNewIri: TEdit;
     LbIris: TListbox;
     BtnAddIri: TButton;
     BtnDelIri: TButton;
+    cbConfidential: TCheckBox;
+    Label1: TLabel;
+    Label18: TLabel;
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure FormShow(Sender: TObject);
     procedure BtnAddAsnIdClick(Sender: TObject);
     procedure BtnDelAsnIdClick(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
-    procedure Button7Click(Sender: TObject);
-    procedure Button6Click(Sender: TObject);
-    procedure Button8Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
+    procedure BtnCreateOidClick(Sender: TObject);
+    procedure BtnRaRootCreateClick(Sender: TObject);
+    procedure BtnOidDeleteClick(Sender: TObject);
+    procedure BtnRaDeleteClick(Sender: TObject);
+    procedure BtnSaveOidClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure CheckBox1Click(Sender: TObject);
-    procedure Button9Click(Sender: TObject);
+    procedure cbDraftClick(Sender: TObject);
+    procedure BtnRaSaveClick(Sender: TObject);
     procedure Edit8KeyPress(Sender: TObject; var Key: Char);
     procedure LbAsnIdsKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -116,21 +119,6 @@ resourcestring
   SCreated_S = 'Created: %s';
   SNumberMustNotExceed_D = 'Number must not exceed %d';
   SNotAValidNumber = 'Not a valid number';
-
-procedure Split(Delimiter: string; Str: string; ListOfStrings: TStrings) ;
-var
-  p: integer;
-begin
-  ListOfStrings.Clear;
-  p := Pos(Delimiter, Str);
-  while p > 0 do
-  begin
-    ListOfStrings.Add(Copy(Str, 1, p-1));
-    Delete(Str, 1, p);
-    p := Pos(Delimiter, Str);
-  end;
-  if Str <> '' then ListOfStrings.Add(Str);
-end;
 
 function TForm1.ShowOID(oid: string; oiddb: POID; nod: TTreeNode): integer;
 var
@@ -203,6 +191,7 @@ procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
 var
   oiddb: POID;
   radb: PRA;
+  p: integer;
 begin
   SaveChangesIfRequired;
 
@@ -215,11 +204,20 @@ begin
       Label16.Caption := LeftPadStr(IntToStr(Integer(TreeView1.Selected.Data)),8,'0')+'.OID';
       Edit4.Text := Copy(TreeView1.Selected.Text, 1, Pos(' ',TreeView1.Selected.Text+' ')-1);
       LbAsnIds.Items.Text := oiddb^.ASNIds.Text;
+      if LbAsnIds.Items.Count > 0 then
+        tsAsnIds.Caption := '*' + StringReplace(tsAsnIds.Caption, '*', '', [])
+      else
+        tsAsnIds.Caption := StringReplace(tsAsnIds.Caption, '*', '', []);
       LbIris.Items.Text := oiddb^.UnicodeLabels.Text;
-      CheckBox1.Checked := oiddb^.draft;
-      Memo1.Text := oiddb^.Description;
-      Edit3.Text := Memo1.Lines.Strings[0];
-      Memo1.Lines.Delete(0);
+      if LbIris.Items.Count > 0 then
+        tsIris.Caption := '*' + StringReplace(tsIris.Caption, '*', '', [])
+      else
+        tsIris.Caption := StringReplace(tsIris.Caption, '*', '', []);
+      cbDraft.Checked := oiddb^.draft;
+      cbConfidential.Checked := oiddb^.hide;
+      p := Pos(#13#10, oiddb^.Description);
+      Edit3.Text := Copy(oiddb^.Description, 1, p-1);
+      Memo1.Text := Copy(oiddb^.Description, 1+p-1+2, 9999);
       Memo1.Modified := false;
       ComboBox1.ItemIndex := ComboBox1.Items.IndexOf(oiddb^.ra);
       Edit5.Text := JpnDateToStr(oiddb^.createddate);
@@ -290,40 +288,6 @@ begin
   TreeView1.Selected := TreeView1.Items[0];
 end;
 
-function Asn1IdValid(asn1id: string): boolean;
-var
-  i: integer;
-begin
-  if asn1id = '' then
-  begin
-    result := false;
-    exit;
-  end;
-
-  if not (asn1id[1] in ['a'..'z']) then
-  begin
-    result := false;
-    exit;
-  end;
-
-  for i := 2 to Length(asn1id) do
-  begin
-    if not (asn1id[1] in ['a'..'z', 'A'..'Z', '0'..'9', '-']) then
-    begin
-      result := false;
-      exit;
-    end;
-  end;
-
-  result := true;
-end;
-
-function UnicodeLabelValid(unicodeLabel: string): boolean;
-begin
-  // TODO: Implement
-  result := true;
-end;
-
 procedure TForm1.BtnAddAsnIdClick(Sender: TObject);
 var
   asn1id: string;
@@ -337,11 +301,15 @@ begin
   end;
   if not Asn1IdValid(asn1id) then ShowError(SInvalidAlphaNumId);
   LbAsnIds.Items.Add(asn1id);
-  if CheckBox1.Checked then
+  if cbDraft.Checked then
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
   else
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true));
   TxtNewAsnId.Text := '';
+  if LbAsnIds.Items.Count > 0 then
+    tsAsnIds.Caption := '*' + StringReplace(tsAsnIds.Caption, '*', '', [])
+  else
+    tsAsnIds.Caption := StringReplace(tsAsnIds.Caption, '*', '', []);
 end;
 
 procedure TForm1.BtnAddIriClick(Sender: TObject);
@@ -358,6 +326,10 @@ begin
   if not UnicodeLabelValid(iri) then ShowError(SInvalidAlphaNumId);
   LbIris.Items.Add(iri);
   TxtNewIri.Text := '';
+  if LbIris.Items.Count > 0 then
+    tsIris.Caption := '*' + StringReplace(tsIris.Caption, '*', '', [])
+  else
+    tsIris.Caption := StringReplace(tsIris.Caption, '*', '', []);
 end;
 
 procedure TForm1.BtnDelAsnIdClick(Sender: TObject);
@@ -365,11 +337,15 @@ begin
   if (LbAsnIds.Items.Count > 0) and LbAsnIds.Selected[LbAsnIds.ItemIndex] then
   begin
     LbAsnIds.Items.Delete(LbAsnIds.ItemIndex);
+    if cbDraft.Checked then
+      TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
+    else
+      TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true));
+    if LbAsnIds.Items.Count > 0 then
+      tsAsnIds.Caption := '*' + StringReplace(tsAsnIds.Caption, '*', '', [])
+    else
+      tsAsnIds.Caption := StringReplace(tsAsnIds.Caption, '*', '', []);
   end;
-  if CheckBox1.Checked then
-    TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
-  else
-    TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true));
 end;
 
 procedure TForm1.BtnDelIriClick(Sender: TObject);
@@ -377,37 +353,14 @@ begin
   if (LbIris.Items.Count > 0) and LbIris.Selected[LbIris.ItemIndex] then
   begin
     LbIris.Items.Delete(LbIris.ItemIndex);
+    if LbIris.Items.Count > 0 then
+      tsIris.Caption := '*' + StringReplace(tsIris.Caption, '*', '', [])
+    else
+      tsIris.Caption := StringReplace(tsIris.Caption, '*', '', []);
   end;
 end;
 
-function IsPositiveNumber(str: string): boolean;
-var
-  i: integer;
-begin
-  if (str = '') then
-  begin
-    result := false;
-    exit;
-  end;
-
-  result := true;
-  for i := 1 to Length(str) do
-  begin
-    if not (str[i] in ['0'..'9']) then
-    begin
-      result := false;
-      exit;
-    end;
-  end;
-
-  if (str[1] = '0') and (str <> '0') then
-  begin
-    result := false;
-    exit;
-  end;
-end;
-
-procedure TForm1.Button4Click(Sender: TObject);
+procedure TForm1.BtnCreateOidClick(Sender: TObject);
 var
   i, di: integer;
   oid, parent_oid, new_value: string;
@@ -485,7 +438,7 @@ begin
   ShowMessageFmt(SCreated_S, [oid]);
 end;
 
-procedure TForm1.Button7Click(Sender: TObject);
+procedure TForm1.BtnRaRootCreateClick(Sender: TObject);
 var
   nod: TTreeNode;
   new_value, candidate: string;
@@ -576,7 +529,7 @@ begin
   FindClose(DirInfo);
 end;
 
-procedure TForm1.Button6Click(Sender: TObject);
+procedure TForm1.BtnOidDeleteClick(Sender: TObject);
 var
   nod: TTreeNode;
   parent_oid, this_oid: string;
@@ -586,7 +539,7 @@ var
 begin
   if MessageDlg(SAreYouSure, mtConfirmation, mbYesNoCancel, 0) <> idYes then exit;
 
-  Button6.Tag := 1;
+  BtnOidDelete.Tag := 1;
   try
 
     this_oid := Edit4.Text;
@@ -621,11 +574,11 @@ begin
     TreeView1.Selected := nod.Parent;
     TreeView1.Items.Delete(nod);
   finally
-    Button6.Tag := 0;
+    BtnOidDelete.Tag := 0;
   end;
 end;
 
-procedure TForm1.Button8Click(Sender: TObject);
+procedure TForm1.BtnRaDeleteClick(Sender: TObject);
 var
   nod: TTreeNode;
   radb_idx: PRA;
@@ -634,7 +587,7 @@ var
 begin
   if MessageDlg(SAreYouSure, mtConfirmation, mbYesNoCancel, 0) <> idYes then exit;
 
-  Button8.Tag := 1;
+  BtnRaDelete.Tag := 1;
   try
     CreateRaDef(radb_idx);
     try
@@ -664,22 +617,11 @@ begin
 
     ComboBox1.Items.Delete(ComboBox1.Items.IndexOf(sectionName));
   finally
-    Button8.Tag := 0;
+    BtnRaDelete.Tag := 0;
   end;
 end;
 
-function RandomStr(len: integer): string;
-var
-  i: integer;
-begin
-  result := '';
-  for i := 1 to len do
-  begin
-    result := result + Chr(ord('A') + Random(26));
-  end;
-end;
-
-procedure TForm1.Button2Click(Sender: TObject);
+procedure TForm1.BtnSaveOidClick(Sender: TObject);
 var
   modified: boolean;
   oiddb: POID;
@@ -701,10 +643,16 @@ begin
       oiddb^.ra := ComboBox1.Text;
     end;
 
-    if oiddb^.draft <> CheckBox1.Checked then
+    if oiddb^.draft <> cbDraft.Checked then
     begin
       modified := true;
-      oiddb^.draft := CheckBox1.Checked;
+      oiddb^.draft := cbDraft.Checked;
+    end;
+
+    if oiddb^.hide <> cbConfidential.Checked then
+    begin
+      modified := true;
+      oiddb^.hide := cbConfidential.Checked;
     end;
 
     sl.Add(Edit3.Text);
@@ -781,15 +729,16 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   PageControl1.ActivePage := TabSheet3;
+  PageControl2.ActivePage := tsAsnIds;
   Randomize;
 end;
 
 procedure TForm1.SaveChangesIfRequired;
 begin
-  if Button6.Tag = 1 then exit; // Do not save the OID child data if it was just deleted
-  if Button8.Tag = 1 then exit; // Do not save the RA child data if it was just deleted
-  if PageControl1.ActivePage = TabSheet1 then Button2.Click; // Save changes
-  if PageControl1.ActivePage = TabSheet2 then Button9.Click; // Save changes
+  if BtnOidDelete.Tag = 1 then exit; // Do not save the OID child data if it was just deleted
+  if BtnRaDelete.Tag = 1 then exit; // Do not save the RA child data if it was just deleted
+  if PageControl1.ActivePage = TabSheet1 then BtnSaveOid.Click; // Save changes
+  if PageControl1.ActivePage = TabSheet2 then BtnRaSave.Click; // Save changes
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -798,9 +747,9 @@ begin
   CanClose := true;
 end;
 
-procedure TForm1.CheckBox1Click(Sender: TObject);
+procedure TForm1.cbDraftClick(Sender: TObject);
 begin
-  if CheckBox1.Checked then
+  if cbDraft.Checked then
     TreeView1.Selected.Text := Trim(Edit4.Text+' '+GetAsn1Ids(true))+' [DRAFT]'
   else
     TreeView1.Selected.Text := Trim(Edit4.Text+' '+GetAsn1Ids(true));
@@ -812,7 +761,7 @@ begin
   Abort;
 end;
 
-procedure TForm1.Button9Click(Sender: TObject);
+procedure TForm1.BtnRaSaveClick(Sender: TObject);
 var
   modified: boolean;
   radb: PRA;
@@ -858,7 +807,7 @@ procedure TForm1.Edit8KeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then
   begin
-    Button7.Click;
+    BtnRaRootCreate.Click;
     Key := #0;
     Exit;
   end;
@@ -894,7 +843,7 @@ procedure TForm1.Edit2KeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then
   begin
-    Button5.Click;
+    BtnOidRootCreate.Click;
     Key := #0;
   end;
 end;
@@ -903,7 +852,7 @@ procedure TForm1.Edit1KeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then
   begin
-    Button4.Click;
+    BtnCreateOid.Click;
     Key := #0;
   end;
 end;
@@ -915,11 +864,11 @@ begin
   begin
     if Copy(TreeView1.Selected.Text, 1, 4) = 'OID:' then
     begin
-      Button6.Click;
+      BtnOidDelete.Click;
     end
     else if Copy(TreeView1.Selected.Text, 1, 3) = 'RA:' then
     begin
-      Button8.Click;
+      BtnRaDelete.Click;
     end
     else
     begin

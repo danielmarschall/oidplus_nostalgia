@@ -30,7 +30,7 @@ function ReadRaFile(filename: string; ra: PRA): boolean;
 implementation
 
 uses
-  Funcs, Math;
+  Funcs, Math, StrUtils;
 
 const
   WANT_VERS = '2024';
@@ -211,7 +211,7 @@ begin
       end
       else
       begin
-        if cmd <> '[1.3' then
+        if ContainsStr(cmd, '[') then // prevent that [1.3.6....]  or  <BOM>[1.3.6...] are added as extra lines
           ra^.UnknownLines.Add(cmd + line);
       end;
     end;

@@ -118,14 +118,14 @@ object Form1: TForm1
         ReadOnly = True
         TabOrder = 1
       end
-      object CheckBox1: TCheckBox
+      object cbDraft: TCheckBox
         Left = 168
         Top = 110
         Width = 75
         Height = 17
         Caption = 'Draft OID'
         TabOrder = 2
-        OnClick = CheckBox1Click
+        OnClick = cbDraftClick
       end
       object ComboBox1: TComboBox
         Left = 3
@@ -155,7 +155,7 @@ object Form1: TForm1
         ReadOnly = True
         TabOrder = 10
       end
-      object Button2: TButton
+      object BtnSaveOid: TButton
         Left = 3
         Top = 540
         Width = 75
@@ -163,9 +163,9 @@ object Form1: TForm1
         Anchors = [akLeft, akBottom]
         Caption = 'Save'
         TabOrder = 5
-        OnClick = Button2Click
+        OnClick = BtnSaveOidClick
       end
-      object Button4: TButton
+      object BtnCreateOid: TButton
         Left = 269
         Top = 540
         Width = 75
@@ -173,7 +173,7 @@ object Form1: TForm1
         Anchors = [akLeft, akBottom]
         Caption = 'Create child:'
         TabOrder = 8
-        OnClick = Button4Click
+        OnClick = BtnCreateOidClick
       end
       object Edit1: TEdit
         Left = 349
@@ -184,7 +184,7 @@ object Form1: TForm1
         TabOrder = 7
         OnKeyPress = Edit1KeyPress
       end
-      object Button6: TButton
+      object BtnOidDelete: TButton
         Left = 123
         Top = 540
         Width = 75
@@ -192,16 +192,16 @@ object Form1: TForm1
         Anchors = [akLeft, akBottom]
         Caption = 'Delete'
         TabOrder = 6
-        OnClick = Button6Click
+        OnClick = BtnOidDeleteClick
       end
       object PageControl2: TPageControl
         Left = 249
         Top = 0
         Width = 181
         Height = 140
-        ActivePage = TabAsnIds
+        ActivePage = tsAsnIds
         TabOrder = 11
-        object TabAsnIds: TTabSheet
+        object tsAsnIds: TTabSheet
           Caption = 'ASN.1 ID'
           object TxtNewAsnId: TEdit
             Left = 3
@@ -239,8 +239,8 @@ object Form1: TForm1
             OnClick = BtnDelAsnIdClick
           end
         end
-        object TabSheet6: TTabSheet
-          Caption = 'IRI'
+        object tsIris: TTabSheet
+          Caption = 'Unicode Labels'
           ImageIndex = 1
           object TxtNewIri: TEdit
             Left = 3
@@ -277,6 +277,15 @@ object Form1: TForm1
             OnClick = BtnDelIriClick
           end
         end
+      end
+      object cbConfidential: TCheckBox
+        Left = 168
+        Top = 131
+        Width = 75
+        Height = 17
+        Caption = 'Confidential'
+        TabOrder = 12
+        OnClick = cbDraftClick
       end
     end
     object TabSheet2: TTabSheet
@@ -333,14 +342,14 @@ object Form1: TForm1
         Alignment = taRightJustify
         Caption = 'Filename'
       end
-      object Button8: TButton
+      object BtnRaDelete: TButton
         Left = 126
         Top = 200
         Width = 75
         Height = 25
         Caption = 'Delete'
         TabOrder = 7
-        OnClick = Button8Click
+        OnClick = BtnRaDeleteClick
       end
       object Edit9: TEdit
         Left = 24
@@ -383,14 +392,14 @@ object Form1: TForm1
         Height = 21
         TabOrder = 5
       end
-      object Button9: TButton
+      object BtnRaSave: TButton
         Left = 22
         Top = 200
         Width = 75
         Height = 25
         Caption = 'Save'
         TabOrder = 6
-        OnClick = Button9Click
+        OnClick = BtnRaSaveClick
       end
       object Edit14: TEdit
         Left = 312
@@ -420,14 +429,21 @@ object Form1: TForm1
         Font.Style = [fsItalic]
         ParentFont = False
       end
-      object Button5: TButton
+      object Label1: TLabel
+        Left = 97
+        Top = 91
+        Width = 126
+        Height = 13
+        Caption = 'Possible root OIDs:  0, 1, 2'
+      end
+      object BtnOidRootCreate: TButton
         Left = 16
         Top = 64
         Width = 75
         Height = 25
         Caption = 'Create child:'
         TabOrder = 1
-        OnClick = Button4Click
+        OnClick = BtnCreateOidClick
       end
       object Edit2: TEdit
         Left = 96
@@ -455,6 +471,13 @@ object Form1: TForm1
         Font.Style = [fsItalic]
         ParentFont = False
       end
+      object Label18: TLabel
+        Left = 96
+        Top = 88
+        Width = 111
+        Height = 13
+        Caption = 'Short Name for the OID'
+      end
       object Edit8: TEdit
         Left = 96
         Top = 64
@@ -463,14 +486,14 @@ object Form1: TForm1
         TabOrder = 0
         OnKeyPress = Edit8KeyPress
       end
-      object Button7: TButton
+      object BtnRaRootCreate: TButton
         Left = 16
         Top = 64
         Width = 75
         Height = 25
         Caption = 'Create RA:'
         TabOrder = 1
-        OnClick = Button7Click
+        OnClick = BtnRaRootCreateClick
       end
     end
   end

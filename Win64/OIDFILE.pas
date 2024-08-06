@@ -18,6 +18,7 @@ type
     ParentDotNotation: string;
     ra: string;
     draft: boolean;
+    hide: boolean;
     createddate: TDateTime;
     updateddate: TDateTime;
     UnknownLines: TStringList;
@@ -36,7 +37,7 @@ function DotNotationPart(s: string): string;
 implementation
 
 uses
-  Funcs, Math;
+  Funcs, Math, StrUtils;
 
 const
   WANT_VERS = '2022';
@@ -58,6 +59,7 @@ begin
     oid^.SubIds := TStringList.Create;
     oid^.ra := '';
     oid^.draft := false;
+    oid^.hide := false;
     oid^.createddate := 0;
     oid^.updateddate := 0;
     oid^.UnknownLines := TStringList.Create;
@@ -97,6 +99,7 @@ begin
   oid^.SubIds.Clear;
   oid^.ra := '';
   oid^.draft := false;
+  oid^.hide := false;
   oid^.createddate := 0;
   oid^.updateddate := 0;
   oid^.UnknownLines.Clear;
@@ -189,6 +192,11 @@ begin
     else
       slOut.Add('DRFT' + '0');
 
+    if oid^.hide then
+      slOut.Add('HIDE' + '1')
+    else
+      slOut.Add('HIDE' + '0');
+
     if CompareValue(oid^.createddate,0) <> 0 then
       slOut.Add('CDAT' + JpnDateToStr(oid^.createddate));
 
@@ -274,6 +282,10 @@ begin
       begin
         oid^.draft := line = '1';
       end
+      else if cmd = 'HIDE' then
+      begin
+        oid^.hide := line = '1';
+      end
       else if cmd = 'CDAT' then
       begin
         oid^.createddate := JpnStrToDate(line);
@@ -284,7 +296,7 @@ begin
       end
       else
       begin
-        if cmd <> '[1.3' then
+        if ContainsStr(cmd, '[') then // prevent that [1.3.6....]  or  <BOM>[1.3.6...] are added as extra lines
           oid^.UnknownLines.Add(cmd + line);
       end;
     end;
