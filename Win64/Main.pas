@@ -115,6 +115,7 @@ resourcestring
   TITLE_RA = 'Registration Authorities';
   SItemAlreadyExists = 'Item already exists';
   SInvalidAlphaNumId = 'Invalid alphanumeric identifier';
+  SInvalidUnicodeLabel = 'Invalid Unicode Label';
   SAreYouSure = 'Are you sure?';
   SCreated_S = 'Created: %s';
   SNumberMustNotExceed_D = 'Number must not exceed %d';
@@ -293,7 +294,7 @@ var
   asn1id: string;
   i: integer;
 begin
-  asn1id := TxtNewAsnId.Text;
+  asn1id := Trim(TxtNewAsnId.Text);
   if asn1id = '' then exit;
   for i := 0 to LbAsnIds.Items.Count-1 do
   begin
@@ -317,13 +318,14 @@ var
   iri: string;
   i: integer;
 begin
-  iri := TxtNewIri.Text;
+  // TODO: Unicode Labels used by another OID in the same parent arc must be forbidden (ASN.1 does not have this restriction)
+  iri := Trim(TxtNewIri.Text);
   if iri = '' then exit;
   for i := 0 to LbIris.Items.Count-1 do
   begin
-    if LbAsnIds.Items.Strings[i] = iri then ShowError(SItemAlreadyExists);
+    if LbIris.Items.Strings[i] = iri then ShowError(SItemAlreadyExists);
   end;
-  if not UnicodeLabelValid(iri) then ShowError(SInvalidAlphaNumId);
+  if not UnicodeLabelValid(iri, false) then ShowError(SInvalidUnicodeLabel);
   LbIris.Items.Add(iri);
   TxtNewIri.Text := '';
   if LbIris.Items.Count > 0 then
@@ -447,8 +449,7 @@ var
   nextid: string;
   radb_idx: PRA;
 begin
-  new_value := Edit8.Text;
-  new_value := Trim(new_value);
+  new_value := Trim(Edit8.Text);
   if new_value = '' then exit;
 
   for i := 0 to TreeView1.Selected.Count-1 do

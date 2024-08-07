@@ -13,9 +13,10 @@ function JpnStrToDate(const DateStr: string): TDateTime;
 function JpnDateToStr(Date: TDateTime): string;
 procedure Split(Delimiter: string; Str: string; ListOfStrings: TStrings);
 function Asn1IdValid(asn1id: string): boolean;
-function UnicodeLabelValid(unicodeLabel: string): boolean;
+function UnicodeLabelValid(const arc: string; allowNumeric: boolean): boolean;
 function IsPositiveNumber(str: string): boolean;
 function RandomStr(len: integer): string;
+function IsNumericString(const S: string): Boolean;
 
 implementation
 
@@ -249,10 +250,86 @@ begin
   result := true;
 end;
 
-function UnicodeLabelValid(unicodeLabel: string): boolean;
+function IsNumericString(const S: string): Boolean;
+var
+  I: Integer;
 begin
-  // TODO: Implement
-  result := true;
+  if S = '' then exit(false);
+  Result := True;  // Assume the string is numeric
+  for I := 1 to Length(S) do
+  begin
+    if not (S[I] in ['0'..'9']) then
+    begin
+      Result := False;  // If any character is not a digit, the string is not numeric
+      Break;
+    end;
+  end;
+end;
+
+function iri_char_valid(c: Char; firstchar, lastchar: boolean): boolean;
+var
+  v: integer;
+begin
+  // Please keep in sync with https://misc.daniel-marschall.de/oid-repository/api/oid_utils.inc.phps
+
+	// see Rec. ITU-T X.660, clause 7.5
+
+	if ((firstchar or lastchar) and (c = '-')) then exit(false);
+
+	if (c = '-') then exit(true);
+	if (c = '.') then exit(true);
+	if (c = '_') then exit(true);
+	if (c = '~') then exit(true);
+	if ((c >= '0') and (c <= '9') and not firstchar) then exit(true);
+	if ((c >= 'A') and (c <= 'Z')) then exit(true);
+	if ((c >= 'a') and (c <= 'z')) then exit(true);
+
+	v := Ord(c);
+
+	if ((v >= $000000A0) and (v <= $0000DFFE)) then exit(true);
+	if ((v >= $0000F900) and (v <= $0000FDCF)) then exit(true);
+	if ((v >= $0000FDF0) and (v <= $0000FFEF)) then exit(true);
+	if ((v >= $00010000) and (v <= $0001FFFD)) then exit(true);
+	if ((v >= $00020000) and (v <= $0002FFFD)) then exit(true);
+	if ((v >= $00030000) and (v <= $0003FFFD)) then exit(true);
+	if ((v >= $00040000) and (v <= $0004FFFD)) then exit(true);
+	if ((v >= $00050000) and (v <= $0005FFFD)) then exit(true);
+	if ((v >= $00060000) and (v <= $0006FFFD)) then exit(true);
+	if ((v >= $00070000) and (v <= $0007FFFD)) then exit(true);
+	if ((v >= $00080000) and (v <= $0008FFFD)) then exit(true);
+	if ((v >= $00090000) and (v <= $0009FFFD)) then exit(true);
+	if ((v >= $000A0000) and (v <= $000AFFFD)) then exit(true);
+	if ((v >= $000B0000) and (v <= $000BFFFD)) then exit(true);
+	if ((v >= $000C0000) and (v <= $000CFFFD)) then exit(true);
+	if ((v >= $000D0000) and (v <= $000DFFFD)) then exit(true);
+	if ((v >= $000E1000) and (v <= $000EFFFD)) then exit(true);
+
+	// Note: Rec. ITU-T X.660, clause 7.5.3 would also forbid ranges which are marked in ISO/IEC 10646 as "(This position shall not be used)"
+	// But tool implementers should be tolerate them, since these limitations can be removed in future.
+
+	exit(false);
+end;
+
+function UnicodeLabelValid(const arc: string; allowNumeric: boolean): boolean;
+var
+  i: integer;
+begin
+  // Please keep in sync with https://misc.daniel-marschall.de/oid-repository/api/oid_utils.inc.phps
+
+	if (arc = '') then exit(false);
+
+  if allowNumeric and IsNumericString(arc) then exit(true);
+
+	// Question: Should we strip RTL/LTR characters?
+
+	if (Copy(arc, 3, 2) = '--') then exit(false); // see Rec. ITU-T X.660, clause 7.5.4
+
+  for i := 1 to Length(arc) do
+  begin
+		if not iri_char_valid(arc[i], i=1, i=Length(arc)) then exit(false);
+	end;
+
+	exit(true);
 end;
 
 function IsPositiveNumber(str: string): boolean;

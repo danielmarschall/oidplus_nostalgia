@@ -100,7 +100,7 @@ var
 begin
   slOut := TStringList.Create;
   try
-    slOut.Add('[1.3.6.1.4.1.37476.2.5.3.2]'); // DOS/311/95 ignore this, but it is important, because DOS/311/95 cannot handle a BOM in front of "VERS".
+    slOut.Add('[1.3.6.1.4.1.37476.2.5.3.1.2]'); // DOS/311/95 ignore this, but it is important, because DOS/311/95 cannot handle a BOM in front of "VERS".
 
     slOut.Add('VERS' + WANT_VERS);
 
@@ -211,7 +211,7 @@ begin
       end
       else
       begin
-        if ContainsStr(cmd, '[') then // prevent that [1.3.6....]  or  <BOM>[1.3.6...] are added as extra lines
+        if not ContainsStr(cmd, '[') then // prevent that [1.3.6....]  or  <BOM>[1.3.6...] are added as extra lines
           ra^.UnknownLines.Add(cmd + line);
       end;
     end;
