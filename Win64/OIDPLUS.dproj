@@ -3,7 +3,7 @@
         <ProjectGuid>{5E223B9A-B350-4662-94FA-539F66DA24CD}</ProjectGuid>
         <MainSource>OIDPLUS.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Config Condition="'$(Config)'==''">Release</Config>
         <ProjectName Condition="'$(ProjectName)'==''">OIDPLUS</ProjectName>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Application</AppType>

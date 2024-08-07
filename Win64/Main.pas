@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, IniFiles, ComCtrls, OidFile, RaFile, Vcl.ExtCtrls;
+  StdCtrls, IniFiles, ComCtrls, OidFile, RaFile, ExtCtrls;
 
 type
   TForm1 = class(TForm)
@@ -68,6 +68,8 @@ type
     Label1: TLabel;
     Label18: TLabel;
     LoadTimer: TTimer;
+    Panel1: TPanel;
+    Image1: TImage;
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure FormShow(Sender: TObject);
     procedure BtnAddAsnIdClick(Sender: TObject);
