@@ -320,8 +320,6 @@ begin
 
   if allowNumeric and IsNumericString(arc) then exit(true);
 
-	// Question: Should we strip RTL/LTR characters?
-
 	if (Copy(arc, 3, 2) = '--') then exit(false); // see Rec. ITU-T X.660, clause 7.5.4
 
   for i := 1 to Length(arc) do

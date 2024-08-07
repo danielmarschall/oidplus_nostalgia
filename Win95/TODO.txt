@@ -4,3 +4,6 @@ Export to OIDplus 2.0?
 Implement splash screen (important for large databases)
 
 Implement Unicode labels (Unicows?)
+
+Add "plus" icon instead of the Delphi icon
+
