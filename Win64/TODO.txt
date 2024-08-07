@@ -1,4 +1,2 @@
 
 Export to OIDplus 2.0?
-
-Implement splash screen (important for large databases)

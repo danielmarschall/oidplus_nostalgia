@@ -4,14 +4,14 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, IniFiles, ComCtrls, OidFile, RaFile;
+  StdCtrls, IniFiles, ComCtrls, OidFile, RaFile, Vcl.ExtCtrls;
 
 type
   TForm1 = class(TForm)
     TreeView1: TTreeView;
     PageControl1: TPageControl;
-    TabSheet1: TTabSheet;
-    TabSheet2: TTabSheet;
+    tsOid: TTabSheet;
+    tsRa: TTabSheet;
     Edit3: TEdit;
     Label3: TLabel;
     Memo1: TMemo;
@@ -31,10 +31,10 @@ type
     BtnSaveOid: TButton;
     BtnCreateOid: TButton;
     Edit1: TEdit;
-    TabSheet3: TTabSheet;
+    tsOidIntro: TTabSheet;
     BtnOidRootCreate: TButton;
     Edit2: TEdit;
-    TabSheet4: TTabSheet;
+    tsRaIntro: TTabSheet;
     BtnOidDelete: TButton;
     Edit8: TEdit;
     BtnRaRootCreate: TButton;
@@ -67,6 +67,7 @@ type
     cbConfidential: TCheckBox;
     Label1: TLabel;
     Label18: TLabel;
+    LoadTimer: TTimer;
     procedure TreeView1Change(Sender: TObject; Node: TTreeNode);
     procedure FormShow(Sender: TObject);
     procedure BtnAddAsnIdClick(Sender: TObject);
@@ -90,6 +91,7 @@ type
       Shift: TShiftState);
     procedure BtnAddIriClick(Sender: TObject);
     procedure BtnDelIriClick(Sender: TObject);
+    procedure LoadTimerTimer(Sender: TObject);
   private
     function ShowOID(oid: string; oiddb: POID; nod: TTreeNode): integer;
     procedure ShowRA(radb_idx: PRA; nod: TTreeNode);
@@ -116,6 +118,8 @@ resourcestring
   SItemAlreadyExists = 'Item already exists';
   SInvalidAlphaNumId = 'Invalid alphanumeric identifier';
   SInvalidUnicodeLabel = 'Invalid Unicode Label';
+  SUnicodeLabelDuplicate = 'Unicode Label used by another OID';
+  SCreateDuplicateAsn1Id = 'This ASN.1 ID is already used by another OID. This is not recommended. Continue?';
   SAreYouSure = 'Are you sure?';
   SCreated_S = 'Created: %s';
   SNumberMustNotExceed_D = 'Number must not exceed %d';
@@ -126,6 +130,8 @@ var
   i: integer;
   asn1id1: string;
   oiddb2: POID;
+const
+  EXPAND_MAX_CHILDREN = 125;
 begin
   result := 0;
   if oid = 'OID:' then
@@ -157,7 +163,7 @@ begin
       FreeOidDef(oiddb2);
     end;
   end;
-  if (oid = 'OID:') or (result < 125) then
+  if (oid = 'OID:') or (result < EXPAND_MAX_CHILDREN) then
     nod.Expand(false);
 end;
 
@@ -188,6 +194,47 @@ begin
   nod.Expand(false);
 end;
 
+procedure TForm1.LoadTimerTimer(Sender: TObject);
+var
+  nod, raroot: TTreeNode;
+  oiddb: POID;
+  radb_idx: PRA;
+begin
+  // This load timer replaces code in OnShow(), because code in OnShow() is
+  // executes before the window is shown, so the user might think that the
+  // app didn't open if there is a large database.
+  LoadTimer.Enabled := false;
+
+  Cursor := crHourGlass;
+  try
+    ComboBox1.Clear;
+    TreeView1.Items.Clear;
+    nod := TTreeNode.Create(Treeview1.Items);
+
+    CreateOidDef(oiddb);
+    try
+      if FileExists(DBPath+'00000000.OID') then
+        ReadOidFile(DBPath+'00000000.OID', oiddb);
+      ShowOID('OID:', oiddb, nod);
+    finally
+      FreeOidDef(oiddb);
+    end;
+
+    CreateRaDef(radb_idx);
+    try
+      if FileExists(DBPath+'00000000.RA_') then
+        ReadRaFile(DBPath+'00000000.RA_', radb_idx);
+      ShowRa(radb_idx, nod);
+    finally
+      FreeRaDef(radb_idx);
+    end;
+
+    TreeView1.Selected := TreeView1.Items[0];
+  finally
+    Cursor := crDefault;
+  end;
+end;
+
 procedure TForm1.TreeView1Change(Sender: TObject; Node: TTreeNode);
 var
   oiddb: POID;
@@ -198,7 +245,7 @@ begin
 
   if Copy(TreeView1.Selected.Text, 1, 4) = 'OID:' then
   begin
-    PageControl1.ActivePage := TabSheet1;
+    PageControl1.ActivePage := tsOid;
     CreateOidDef(oiddb);
     try
       ReadOidFile(DBPath+LeftPadStr(IntToStr(Integer(TreeView1.Selected.Data)),8,'0')+'.OID', oiddb);
@@ -231,7 +278,7 @@ begin
   end;
   if Copy(TreeView1.Selected.Text, 1, 3) = 'RA:' then
   begin
-    PageControl1.ActivePage := TabSheet2;
+    PageControl1.ActivePage := tsRa;
     CreateRaDef(radb);
     try
       ReadRaFile(DBPath+LeftPadStr(IntToStr(Integer(TreeView1.Selected.Data)),8,'0')+'.RA_', radb);
@@ -248,48 +295,45 @@ begin
   end;
   if TreeView1.Selected.Text = TITLE_OID then
   begin
-    PageControl1.ActivePage := TabSheet3;
+    PageControl1.ActivePage := tsOidIntro;
     Edit2.Text := '';
   end;
   if TreeView1.Selected.Text = TITLE_RA then
   begin
-    PageControl1.ActivePage := TabSheet4;
+    PageControl1.ActivePage := tsRaIntro;
     Edit8.Text := '';
   end;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
-var
-  nod, raroot: TTreeNode;
-  oiddb: POID;
-  radb_idx: PRA;
 begin
-  ComboBox1.Clear;
-  TreeView1.Items.Clear;
-  nod := TTreeNode.Create(Treeview1.Items);
-
-  CreateOidDef(oiddb);
-  try
-    if FileExists(DBPath+'00000000.OID') then
-      ReadOidFile(DBPath+'00000000.OID', oiddb);
-    ShowOID('OID:', oiddb, nod);
-  finally
-    FreeOidDef(oiddb);
-  end;
-
-  CreateRaDef(radb_idx);
-  try
-    if FileExists(DBPath+'00000000.RA_') then
-      ReadRaFile(DBPath+'00000000.RA_', radb_idx);
-    ShowRa(radb_idx, nod);
-  finally
-    FreeRaDef(radb_idx);
-  end;
-
-  TreeView1.Selected := TreeView1.Items[0];
+  LoadTimer.Enabled := true;
 end;
 
 procedure TForm1.BtnAddAsnIdClick(Sender: TObject);
+
+  function AlphaNumUsageCounter(const asn1id: string): integer;
+  var
+    oiddb, oiddb2: POID;
+    candidate, subid: string;
+  begin
+    result := 0;
+    CreateOidDef(oiddb);
+    CreateOidDef(oiddb2);
+    try
+      ReadOidFile(Label16.Caption, oiddb);
+      ReadOidFile(oiddb^.ParentFileId+'.OID', oiddb);
+      for subid in oiddb^.SubIds do
+      begin
+        ReadOidFile(FileIdPart(subid)+'.OID', oiddb2);
+        if oiddb2^.ASNIds.IndexOf(asn1id) >= 0 then Inc(result);
+      end;
+    finally
+      FreeOidDef(oiddb);
+      FreeOidDef(oiddb2);
+    end;
+  end;
+
 var
   asn1id: string;
   i: integer;
@@ -301,6 +345,8 @@ begin
     if LbAsnIds.Items.Strings[i] = asn1id then ShowError(SItemAlreadyExists);
   end;
   if not Asn1IdValid(asn1id) then ShowError(SInvalidAlphaNumId);
+  if (AlphaNumUsageCounter(asn1id) > 0) and
+     (MessageDlg(SCreateDuplicateAsn1Id, mtConfirmation, mbYesNoCancel, 0) <> idYes) then exit;
   LbAsnIds.Items.Add(asn1id);
   if cbDraft.Checked then
     TreeView1.Selected.Text := Trim(Edit4.Text + ' ' + GetAsn1Ids(true)) + ' [DRAFT]'
@@ -314,11 +360,33 @@ begin
 end;
 
 procedure TForm1.BtnAddIriClick(Sender: TObject);
+
+  function UnicodeLabelUsageCounter(const iri: string): integer;
+  var
+    oiddb, oiddb2: POID;
+    candidate, subid: string;
+  begin
+    result := 0;
+    CreateOidDef(oiddb);
+    CreateOidDef(oiddb2);
+    try
+      ReadOidFile(Label16.Caption, oiddb);
+      ReadOidFile(oiddb^.ParentFileId+'.OID', oiddb);
+      for subid in oiddb^.SubIds do
+      begin
+        ReadOidFile(FileIdPart(subid)+'.OID', oiddb2);
+        if oiddb2^.UnicodeLabels.IndexOf(iri) >= 0 then Inc(result);
+      end;
+    finally
+      FreeOidDef(oiddb);
+      FreeOidDef(oiddb2);
+    end;
+  end;
+
 var
   iri: string;
   i: integer;
 begin
-  // TODO: Unicode Labels used by another OID in the same parent arc must be forbidden (ASN.1 does not have this restriction)
   iri := Trim(TxtNewIri.Text);
   if iri = '' then exit;
   for i := 0 to LbIris.Items.Count-1 do
@@ -326,6 +394,7 @@ begin
     if LbIris.Items.Strings[i] = iri then ShowError(SItemAlreadyExists);
   end;
   if not UnicodeLabelValid(iri, false) then ShowError(SInvalidUnicodeLabel);
+  if UnicodeLabelUsageCounter(iri) > 0 then ShowError(SUnicodeLabelDuplicate);
   LbIris.Items.Add(iri);
   TxtNewIri.Text := '';
   if LbIris.Items.Count > 0 then
@@ -336,7 +405,7 @@ end;
 
 procedure TForm1.BtnDelAsnIdClick(Sender: TObject);
 begin
-  if (LbAsnIds.Items.Count > 0) and LbAsnIds.Selected[LbAsnIds.ItemIndex] then
+  if (LbAsnIds.Items.Count > 0) and (LbAsnIds.ItemIndex >= 0) and LbAsnIds.Selected[LbAsnIds.ItemIndex] then
   begin
     LbAsnIds.Items.Delete(LbAsnIds.ItemIndex);
     if cbDraft.Checked then
@@ -352,7 +421,7 @@ end;
 
 procedure TForm1.BtnDelIriClick(Sender: TObject);
 begin
-  if (LbIris.Items.Count > 0) and LbIris.Selected[LbIris.ItemIndex] then
+  if (LbIris.Items.Count > 0) and (LbIris.ItemIndex >= 0) and LbIris.Selected[LbIris.ItemIndex] then
   begin
     LbIris.Items.Delete(LbIris.ItemIndex);
     if LbIris.Items.Count > 0 then
@@ -371,15 +440,15 @@ var
   oiddb_parent, oiddb_this: POID;
   nextid: string;
 begin
-  if PageControl1.ActivePage = TabSheet1 then new_value := Edit1.Text;
-  if PageControl1.ActivePage = TabSheet3 then new_value := Edit2.Text;
+  if PageControl1.ActivePage = tsOid then new_value := Edit1.Text;
+  if PageControl1.ActivePage = tsOidIntro then new_value := Edit2.Text;
 
   new_value := Trim(new_value);
   if new_value = '' then exit;
 
   if not IsPositiveNumber(new_value) then ShowError(SNotAValidNumber);
 
-  if PageControl1.ActivePage = TabSheet1 then
+  if PageControl1.ActivePage = tsOid then
   begin
     oid := Edit4.Text + '.' + new_value;
     parent_oid := Edit4.Text;
@@ -432,8 +501,8 @@ begin
     FreeOidDef(oiddb_this);
   end;
 
-  if PageControl1.ActivePage = TabSheet1 then Edit1.Text := '';
-  if PageControl1.ActivePage = TabSheet3 then Edit2.Text := '';
+  if PageControl1.ActivePage = tsOid then Edit1.Text := '';
+  if PageControl1.ActivePage = tsOidIntro then Edit2.Text := '';
 
   TreeView1.Selected := nod;
 
@@ -729,7 +798,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  PageControl1.ActivePage := TabSheet3;
+  PageControl1.ActivePage := tsOidIntro;
   PageControl2.ActivePage := tsAsnIds;
   Randomize;
 end;
@@ -738,8 +807,8 @@ procedure TForm1.SaveChangesIfRequired;
 begin
   if BtnOidDelete.Tag = 1 then exit; // Do not save the OID child data if it was just deleted
   if BtnRaDelete.Tag = 1 then exit; // Do not save the RA child data if it was just deleted
-  if PageControl1.ActivePage = TabSheet1 then BtnSaveOid.Click; // Save changes
-  if PageControl1.ActivePage = TabSheet2 then BtnRaSave.Click; // Save changes
+  if PageControl1.ActivePage = tsOid then BtnSaveOid.Click; // Save changes
+  if PageControl1.ActivePage = tsRa then BtnRaSave.Click; // Save changes
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);

@@ -33,10 +33,10 @@ object Form1: TForm1
     Top = 0
     Width = 440
     Height = 582
-    ActivePage = TabSheet4
+    ActivePage = tsOid
     Align = alLeft
     TabOrder = 1
-    object TabSheet1: TTabSheet
+    object tsOid: TTabSheet
       Caption = 'OID'
       TabVisible = False
       DesignSize = (
@@ -199,7 +199,7 @@ object Form1: TForm1
         Top = 0
         Width = 181
         Height = 140
-        ActivePage = tsAsnIds
+        ActivePage = tsIris
         TabOrder = 11
         object tsAsnIds: TTabSheet
           Caption = 'ASN.1 ID'
@@ -288,7 +288,7 @@ object Form1: TForm1
         OnClick = cbDraftClick
       end
     end
-    object TabSheet2: TTabSheet
+    object tsRa: TTabSheet
       Caption = 'RA'
       ImageIndex = 1
       TabVisible = False
@@ -412,7 +412,7 @@ object Form1: TForm1
         TabOrder = 2
       end
     end
-    object TabSheet3: TTabSheet
+    object tsOidIntro: TTabSheet
       Caption = 'OID Intro'
       ImageIndex = 2
       TabVisible = False
@@ -454,7 +454,7 @@ object Form1: TForm1
         OnKeyPress = Edit2KeyPress
       end
     end
-    object TabSheet4: TTabSheet
+    object tsRaIntro: TTabSheet
       Caption = 'RA Intro'
       ImageIndex = 3
       TabVisible = False
@@ -496,5 +496,11 @@ object Form1: TForm1
         OnClick = BtnRaRootCreateClick
       end
     end
+  end
+  object LoadTimer: TTimer
+    Interval = 100
+    OnTimer = LoadTimerTimer
+    Left = 640
+    Top = 16
   end
 end
