@@ -5,7 +5,6 @@ TODO:
 IDEAS:
 * If you call OIDPLUS.EXE with an argument to a .OID file, then open that OID
 * TreeView: Write to StringList (avoid recursive calls) and save StringList to file
-* TreeView: In the preview, let the user jump to a specific OID
 * Implement draft (DRFT), RA name (RA__), creation date (CDAT), and update date (UDAT) to the GUI
 * Data export to OIDplus 2.0
 * XML Export to OID-Info.com
