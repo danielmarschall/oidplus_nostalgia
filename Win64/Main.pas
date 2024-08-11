@@ -266,8 +266,16 @@ begin
       cbDraft.Checked := oiddb^.draft;
       cbConfidential.Checked := oiddb^.hide;
       p := Pos(#13#10, oiddb^.Description);
-      Edit3.Text := Copy(oiddb^.Description, 1, p-1);
-      Memo1.Text := Copy(oiddb^.Description, 1+p-1+2, 9999);
+      if p = 0 then
+      begin
+        Edit3.Text := oiddb^.Description;
+        Memo1.Clear;
+      end
+      else
+      begin
+        Edit3.Text := Copy(oiddb^.Description, 1, p-1);
+        Memo1.Text := Copy(oiddb^.Description, 1+p-1+2, 9999);
+      end;
       Memo1.Modified := false;
       ComboBox1.ItemIndex := ComboBox1.Items.IndexOf(oiddb^.ra);
       Edit5.Text := JpnDateToStr(oiddb^.createddate);
