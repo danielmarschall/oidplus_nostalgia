@@ -7,4 +7,4 @@ IDEAS:
 * TreeView: Write to StringList (avoid recursive calls) and save StringList to file
 * Implement draft (DRFT), RA name (RA__), creation date (CDAT), and update date (UDAT) to the GUI
 * Data export to OIDplus 2.0
-* XML Export to OID-Info.com
+* XML Export to OID-Base.com

@@ -1,9 +1,9 @@
 unit WEID;
 
 (*
- * WEID<=>OID Converter for TurboPascal
+ * WEID<=>OID Converter
  * (c) Webfan.de, ViaThinkSoft
- * Revision 2023-08-10
+ * Revision 2025-01-04
  *)
 
 (*
@@ -13,30 +13,34 @@ unit WEID;
  *     In OIDs, arcs are in decimal base 10. In WEIDs, the arcs are in base 36.
  *     Also, each WEID has a check digit at the end (called WeLuhn Check Digit).
  *
- * The full specification can be found here: https://weid.info/spec.html
+ * The full specification can be found here: https://co.weid.info/spec.html
  *
- * This converter supports WEID as of Spec Change #11
+ * This converter supports WEID as of Spec Change #13
  *
  * A few short notes:
  *     - There are several classes of WEIDs which have different OID bases:
- *           "Class A" WEID:  weid:root:2-RR-?
- *                            oid:2.999
- *                            WEID class base OID: (OID Root)
- *           "Class B" WEID:  weid:pen:SX0-7PR-?
- *                            oid:1.3.6.1.4.1.37476.9999
- *                            WEID class base OID: 1.3.6.1.4.1
- *           "Class C" WEID:  weid:EXAMPLE-?
- *                            oid:1.3.6.1.4.1.37553.8.32488192274
- *                            WEID class base OID: 1.3.6.1.4.1.37553.8
- *           "Class D" WEID:  weid:example.com:TEST-? is equal to weid:9-DNS-COM-EXAMPLE-TEST-?
- *                            Since the check digit is based on the OID, the check digit is equal for both notations.
- *                            oid:1.3.6.1.4.1.37553.8.9.17704.32488192274.16438.1372205
- *                            WEID class base OID: 1.3.6.1.4.1.37553.8.9.17704
+ *           "Class A" WEID:          weid:root:2-RR-?
+ *                                    oid:2.999
+ *                                    WEID class base OID: (OID Root)
+ *           "Class B" PEN WEID:      weid:pen:SX0-7PR-?
+ *                                    oid:1.3.6.1.4.1.37476.9999
+ *                                    WEID class base OID: 1.3.6.1.4.1
+ *           "Class B" UUID WEID:     weid:uuid:019433d5-535f-7098-9e0b-f7b84cf74da3:SX0-?
+ *                                    oid:2.25.2098739235139107623796528785225371043.37476
+ *                                    WEID class base OID: 2.25.<uuid>
+ *           "Class C" WEID:          weid:EXAMPLE-?
+ *                                    oid:1.3.6.1.4.1.37553.8.32488192274
+ *                                    WEID class base OID: 1.3.6.1.4.1.37553.8
+ *           "Class D" Domain WEID:   weid:example.com:TEST-? is equal to weid:9-DNS-COM-EXAMPLE-TEST-?
+ *                                    Since the check digit is based on the OID, the check digit is equal for both notations.
+ *                                    oid:1.3.6.1.4.1.37553.8.9.17704.32488192274.16438.1372205
+ *                                    WEID class base OID: 1.3.6.1.4.1.37553.8.9.17704
  *     - The last arc in a WEID is the check digit. A question mark is the wildcard for an unknown check digit.
  *       In this case, the converter will return the correct expected check digit for the input.
  *     - The namespace (weid:, weid:pen:, weid:root:) is case insensitive.
  *     - Padding with '0' characters is valid (e.g. weid:000EXAMPLE-3)
  *       The paddings do not count into the WeLuhn check digit.
+ *     - URN Notation "urn:x-weid:..." is equal to "weid:..."
  *)
 
 interface
@@ -63,7 +67,6 @@ uses
 
 function weLuhnGetCheckDigit(s: string): integer;
 var
-  p: integer;
   wrkstr: string;
   c: Char;
   i: Integer;
@@ -124,8 +127,11 @@ function WeidToOid(var weid: string): string;
 var
   base: string;
   namespace: string;
+  alt_weid: string;
+  oid: string;
   p: integer;
   rest: string;
+  uuid: string;
   actual_checksum: string;
   expected_checksum: integer;
   complete: string;
@@ -134,11 +140,31 @@ var
   domainpart: string;
   tmp: string;
 begin
+  weid := Trim(weid);
+  weid := StringReplace(weid, 'urn:x-weid:', 'weid:');
+
   p := LastCharPos(weid,':');
   namespace := Copy(weid, 1, p);
   rest := Copy(weid, p+1, Length(weid)-p);
 
   namespace := LowerCase(namespace); (* namespace is case insensitive *)
+
+  if Copy(namespace, 1, 10) = 'weid:uuid:' then
+  begin
+    (* Spec Change 13: Class B UUID WEID, see https://github.com/WEID-Consortium/weid.info/issues/1 *)
+    uuid := Copy(namespace, 11, Length(namespace)-11);
+    alt_weid := 'weid:root:2-P-' + base_convert_bigint(StringReplace(uuid,'-',''), 16, 36) + '-' + rest;
+    oid := WeidToOid(alt_weid);
+    if (oid = '') then
+    begin
+      WeidToOid := '';
+      exit;
+    end;
+    (* fix wildcard checksum if required (transfer checksum from alt_weid to weid) *)
+    weid := Copy(weid, 1, Length(weid)-1) + Copy(alt_weid, Length(alt_weid), 1);
+    WeidToOid := oid;
+    exit;
+  end;
 
   if Copy(namespace, 1, 5) = 'weid:' then
   begin
@@ -169,8 +195,16 @@ begin
           Delete(tmp, 1, p);
         end;
       end;
-      weid := 'weid:9-DNS-' + UpperCase(Domainpart) + Rest;
-      WeidToOid := WeidToOid(weid);
+      alt_weid := 'weid:9-DNS-' + UpperCase(Domainpart) + Rest;
+      oid := WeidToOid(alt_weid);
+      if (oid = '') then
+      begin
+        WeidToOid := '';
+        exit;
+      end;
+      (* fix wildcard checksum if required (transfer checksum from alt_weid to weid) *)
+      weid := Copy(weid, 1, Length(weid)-1) + Copy(alt_weid, Length(alt_weid), 1);
+      WeidToOid := oid;
       exit;
     end;
   end;
@@ -245,18 +279,43 @@ begin
   WeidToOid := oidstr;
 end;
 
+function FormatAsUUID(Input: string): string;
+var
+  PaddedInput: string;
+  UUID: string;
+begin
+  { Input auf 32 Zeichen mit '0' auffüllen }
+  while Length(Input) < 32 do
+    Input := '0' + Input;
+  PaddedInput := Input;
+
+  { UUID formatieren }
+  UUID := Copy(PaddedInput, 1, 8) + '-' +
+          Copy(PaddedInput, 9, 4) + '-' +
+          Copy(PaddedInput, 13, 4) + '-' +
+          Copy(PaddedInput, 17, 4) + '-' +
+          Copy(PaddedInput, 21, 12);
+
+  { Ergebnis in Kleinbuchstaben umwandeln }
+  FormatAsUUID := LowerCase(UUID);
+end;
+
 function OidToWeid(oid: string): string;
 var
   is_class_a: boolean;
-  is_class_b: boolean;
+  is_class_b_pen: boolean;
+  is_class_b_uuid: boolean;
   is_class_c: boolean;
   weidstr: string;
   checksum: string;
   namespace: string;
+  uuid_base36: string;
   p: Integer;
   cd: Integer;
   res: string;
 begin
+  oid := Trim(oid);
+
   if Copy(oid,1,1) = '.' then
     Delete(oid,1,1); (* remove leading dot *)
 
@@ -290,10 +349,12 @@ begin
 
   is_class_c := (Pos('1-3-6-1-4-1-SZ5-8-', weidstr) = 1) or
                 (weidstr = '1-3-6-1-4-1-SZ5-8');
-  is_class_b := ((Pos('1-3-6-1-4-1-', weidstr) = 1) or
+  is_class_b_pen := ((Pos('1-3-6-1-4-1-', weidstr) = 1) or
                 (weidstr = '1-3-6-1-4-1'))
                 and not is_class_c;
-  is_class_a := not is_class_b and not is_class_c;
+  is_class_b_uuid := ((Pos('2-P-', weidstr) = 1) or
+                (weidstr = '2-P'));
+  is_class_a := not is_class_b_pen and not is_class_b_uuid and not is_class_c;
 
   cd := weLuhnGetCheckDigit(weidstr);
   if cd < 0 then
@@ -308,10 +369,24 @@ begin
     Delete(weidstr, 1, Length('1-3-6-1-4-1-SZ5-8-'));
     namespace := 'weid:';
   end
-  else if is_class_b then
+  else if is_class_b_pen then
   begin
     Delete(weidstr, 1, Length('1-3-6-1-4-1-'));
     namespace := 'weid:pen:';
+  end
+  else if is_class_b_uuid then
+  begin
+    (* Spec Change 13: UUID WEID *)
+    Delete(weidstr, 1, Length('2-P-'));
+    p := Pos('-', weidstr);
+    if p = 0 then
+    begin
+      OidToWeid := '';
+      exit;
+    end;
+    uuid_base36 := Copy(weidstr, 1, p-1);
+    Delete(weidstr, 1, p);
+    namespace := 'weid:uuid:' + formatAsUUID(base_convert_bigint(uuid_base36, 36, 16)) + ':';
   end
   else if is_class_a then
   begin
