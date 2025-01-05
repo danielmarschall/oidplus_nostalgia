@@ -3,7 +3,7 @@ unit WEID_Delphi;
 (*
  * WEID<=>OID Converter
  * (c) Webfan.de, ViaThinkSoft
- * Revision 2025-01-04
+ * Revision 2025-01-05
  *)
 
 (*
@@ -426,8 +426,7 @@ begin
   is_class_b_pen := ((Pos('1-3-6-1-4-1-', weidstr) = 1) or
                 (weidstr = '1-3-6-1-4-1'))
                 and not is_class_c;
-  is_class_b_uuid := ((Pos('2-P-', weidstr) = 1) or
-                (weidstr = '2-P'));
+  is_class_b_uuid := Pos('2-P-', weidstr) = 1; // do NOT check for ='2-P', as this must be class A
   is_class_a := not is_class_b_pen and not is_class_b_uuid and not is_class_c;
 
   cd := weLuhnGetCheckDigit(weidstr);
