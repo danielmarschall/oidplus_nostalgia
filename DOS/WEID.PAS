@@ -15,7 +15,7 @@ unit WEID;
  *
  * The full specification can be found here: https://co.weid.info/spec.html
  *
- * This converter supports WEID as of Spec Change #14
+ * This converter supports WEID as of Spec Change #15
  *
  * A few short notes:
  *     - There are several classes of WEIDs which have different OID bases:
@@ -132,6 +132,7 @@ var
   p: integer;
   rest: string;
   uuid: string;
+  pen: string;
   actual_checksum: string;
   expected_checksum: integer;
   complete: string;
@@ -151,22 +152,24 @@ begin
 
   if namespace = 'weid:uuid:' then
   begin
-    (* Spec Change 14, Special case: OID 2.25 is weid:uuid:? *)
-    if (rest = '?') or (rest = '3') then
-    begin
-      weid := 'weid:uuid:3';
-      WeidToOid := '2.25';
-    end
-    else
+    (* Spec Change 15 *)
+    alt_weid := 'weid:root:2-P-' + rest;
+    oid := WeidToOid(alt_weid);
+    if (oid = '') then
     begin
       WeidToOid := '';
+      exit;
     end;
+    (* fix wildcard checksum if required (transfer checksum from alt_weid to weid) *)
+    weid := Copy(weid, 1, Length(weid)-1) + Copy(alt_weid, Length(alt_weid), 1);
+    WeidToOid := oid;
     exit;
   end
   else if Copy(namespace, 1, 10) = 'weid:uuid:' then
   begin
     (* Spec Change 13: Class B UUID WEID, see https://github.com/WEID-Consortium/weid.info/issues/1 *)
     uuid := Copy(namespace, 11, Length(namespace)-11);
+    (* TODO: verify if uuid is valid *)
     alt_weid := 'weid:root:2-P-' + base_convert_bigint(StringReplace(uuid,'-',''), 16, 36) + '-' + rest;
     oid := WeidToOid(alt_weid);
     if (oid = '') then
@@ -229,7 +232,7 @@ begin
     WeidToOid := '[Proprietary WEID Namespace]';
     Exit;
   end
-  else if namespace = 'weid:' then  
+  else if namespace = 'weid:' then
   begin
     (* Class C *)
     base := '1-3-6-1-4-1-SZ5-8';
@@ -238,6 +241,22 @@ begin
   begin
     (* Class B *)
     base := '1-3-6-1-4-1';
+  end
+  else if Copy(namespace, 1, 9) = 'weid:pen:' then
+  begin
+    (* Spec Change 15 *)
+    pen := Copy(namespace, 10, Length(namespace)-10);
+    alt_weid := 'weid:root:1-3-6-1-4-1-' + base_convert_bigint(pen, 10, 36) + '-' + rest;
+    oid := WeidToOid(alt_weid);
+    if (oid = '') then
+    begin
+      WeidToOid := '';
+      exit;
+    end;
+    (* fix wildcard checksum if required (transfer checksum from alt_weid to weid) *)
+    weid := Copy(weid, 1, Length(weid)-1) + Copy(alt_weid, Length(alt_weid), 1);
+    WeidToOid := oid;
+    exit;
   end
   else if namespace = 'weid:root:' then
   begin
