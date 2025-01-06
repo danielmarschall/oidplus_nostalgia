@@ -454,8 +454,7 @@ begin
     p := Pos('-', weidstr);
     if p = 0 then
     begin
-      result := '';
-      exit;
+      p := Length(weidstr)+1;
     end;
     uuid_base36 := Copy(weidstr, 1, p-1);
     Delete(weidstr, 1, p);
