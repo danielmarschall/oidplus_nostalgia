@@ -204,6 +204,33 @@ begin
     result := 10 - (sum mod 10);
 end;
 
+function IsHexChar(C: Char): Boolean;
+begin
+  C := UpCase(C);
+  result := (C >= '0') and (C <= '9') or (C >= 'A') and (C <= 'F');
+end;
+
+function IsValidUUID(AValue: String): Boolean;
+var
+  I: Integer;
+begin
+  result := False;
+  if Length(AValue) <> 36 then
+    Exit;
+  for I := 1 to 36 do
+  begin
+    case I of
+      9, 14, 19, 24:
+        if AValue[I] <> '-' then
+          Exit;
+      else
+        if not IsHexChar(AValue[I]) then
+          Exit;
+    end;
+  end;
+  result := True;
+end;
+
 function WeidToOid(var weid: string): string;
 var
   base: string;
@@ -250,7 +277,11 @@ begin
   begin
     // Spec Change 13: Class B UUID WEID, see https://github.com/WEID-Consortium/weid.info/issues/1
     uuid := Copy(namespace, 11, Length(namespace)-11);
-    (* TODO: verify if uuid is valid *)
+    if not IsValidUUID(uuid) then
+    begin
+      result := '';
+      exit;
+    end;
     alt_weid := 'weid:root:2-P-' + base_convert_bigint(StringReplace(uuid,'-','',[rfReplaceAll]), 16, 36) + '-' + rest;
     oid := WeidToOid(alt_weid);
     if (oid = '') then
