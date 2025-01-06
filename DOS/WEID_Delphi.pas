@@ -3,7 +3,7 @@ unit WEID_Delphi;
 (*
  * WEID<=>OID Converter
  * (c) Webfan.de, ViaThinkSoft
- * Revision 2025-01-05
+ * Revision 2025-01-06
  *)
 
 (*
@@ -15,7 +15,7 @@ unit WEID_Delphi;
  *
  * The full specification can be found here: https://co.weid.info/spec.html
  *
- * This converter supports WEID as of Spec Change #13
+ * This converter supports WEID as of Spec Change #14
  *
  * A few short notes:
  *     - There are several classes of WEIDs which have different OID bases:
@@ -230,9 +230,23 @@ begin
 
   namespace := LowerCase(namespace); (* namespace is case insensitive *)
 
-  if Copy(namespace, 1, 10) = 'weid:uuid:' then
+  if namespace = 'weid:uuid:' then
   begin
-    // Spec Change 13: Class B UUID WEID ( https://github.com/WEID-Consortium/weid.info/issues/1 )
+    (* Spec Change 14, Special case: OID 2.25 is weid:uuid:? *)
+    if (rest = '?') or (rest = '3') then
+    begin
+      weid := 'weid:uuid:3';
+      result := '2.25';
+    end
+    else
+    begin
+      result := '';
+    end;
+    exit;
+  end
+  else if Copy(namespace, 1, 10) = 'weid:uuid:' then
+  begin
+    // Spec Change 13: Class B UUID WEID, see https://github.com/WEID-Consortium/weid.info/issues/1
     uuid := Copy(namespace, 11, Length(namespace)-11);
     alt_weid := 'weid:root:2-P-' + base_convert_bigint(StringReplace(uuid,'-','',[rfReplaceAll]), 16, 36) + '-' + rest;
     oid := WeidToOid(alt_weid);
@@ -426,7 +440,7 @@ begin
   is_class_b_pen := ((Pos('1-3-6-1-4-1-', weidstr) = 1) or
                 (weidstr = '1-3-6-1-4-1'))
                 and not is_class_c;
-  is_class_b_uuid := Pos('2-P-', weidstr) = 1; // do NOT check for ='2-P', as this must be class A
+  is_class_b_uuid := (Pos('2-P-', weidstr) = 1) or (weidstr = '2-P');
   is_class_a := not is_class_b_pen and not is_class_b_uuid and not is_class_c;
 
   cd := weLuhnGetCheckDigit(weidstr);
@@ -449,16 +463,22 @@ begin
   end
   else if is_class_b_uuid then
   begin
-    (* Spec Change 13: UUID WEID *)
-    Delete(weidstr, 1, Length('2-P-'));
-    p := Pos('-', weidstr);
-    if p = 0 then
+    if weidstr = '2-P' then
     begin
-      p := Length(weidstr)+1;
+      (* Spec Change 14: Special case: OID 2.25 is weid:uuid:? *)
+      weidstr := '';
+      namespace := 'weid:uuid:';
+    end
+    else
+    begin
+      (* Spec Change 13: UUID WEID *)
+      Delete(weidstr, 1, Length('2-P-'));
+      p := Pos('-', weidstr);
+      if p = 0 then p := Length(weidstr) + 1;
+      uuid_base36 := Copy(weidstr, 1, p-1);
+      Delete(weidstr, 1, p);
+      namespace := 'weid:uuid:' + formatAsUUID(base_convert_bigint(uuid_base36, 36, 16)) + ':';
     end;
-    uuid_base36 := Copy(weidstr, 1, p-1);
-    Delete(weidstr, 1, p);
-    namespace := 'weid:uuid:' + formatAsUUID(base_convert_bigint(uuid_base36, 36, 16)) + ':';
   end
   else if is_class_a then
   begin
